@@ -12,10 +12,16 @@ import { useAlerts, CriticalBanner } from "@/components/dashboard/SmartAlerts";
 import RiskManager from "@/components/dashboard/RiskManager";
 
 import CurrentMarketPlay from "@/components/dashboard/CurrentMarketPlay";
+import LandingPage from "@/components/landing/LandingPage";
 
 export default function Dashboard() {
+  const [showTerminal, setShowTerminal] = useState(false);
   const { alerts, criticalBanner, dismissBanner, markAllRead, clearAll, unreadCount } = useAlerts();
   const [activeMarket, setActiveMarket] = useState("Global Equities");
+
+  if (!showTerminal) {
+    return <LandingPage onOpenTerminal={() => setShowTerminal(true)} />;
+  }
 
   return (
     <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-[#0B0F14] text-text-primary p-3 md:p-4 gap-3 md:gap-4 max-w-[2560px] mx-auto w-full font-sans relative">
