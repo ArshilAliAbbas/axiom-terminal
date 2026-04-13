@@ -24,17 +24,29 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-[#0B0F14] text-text-primary p-3 md:p-4 gap-3 md:gap-4 max-w-[2560px] mx-auto w-full font-sans relative">
+    <div className="flex flex-col h-screen max-h-screen overflow-hidden bg-[#07090c] text-text-primary max-w-[2560px] mx-auto w-full font-sans relative">
+      {/* Subtle ambient background */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[#fce075]/[0.02] blur-[200px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/[0.02] blur-[150px] rounded-full" />
+      </div>
+      
       <CriticalBanner alert={criticalBanner} onDismiss={dismissBanner} />
-      <TopBar 
-        alerts={alerts}
-        unreadCount={unreadCount}
-        onMarkAllRead={markAllRead}
-        onClearAll={clearAll}
-        activeMarket={activeMarket}
-        setActiveMarket={setActiveMarket}
-      />
-      <div className="flex flex-col xl:flex-row flex-1 gap-3 md:gap-4 overflow-hidden min-h-0">
+      
+      {/* Top Bar */}
+      <div className="relative z-10 px-3 pt-3">
+        <TopBar 
+          alerts={alerts}
+          unreadCount={unreadCount}
+          onMarkAllRead={markAllRead}
+          onClearAll={clearAll}
+          activeMarket={activeMarket}
+          setActiveMarket={setActiveMarket}
+        />
+      </div>
+      
+      {/* Main Grid */}
+      <div className="flex flex-col xl:flex-row flex-1 gap-3 overflow-hidden min-h-0 p-3 relative z-10">
         
         {/* Left Panel - Market Data */}
         <div className="hidden xl:flex w-[320px] shrink-0 flex-col gap-3 overflow-hidden min-h-0">
@@ -46,8 +58,8 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* Center Panel - Dominant Intelligence Area */}
-        <div className="flex-1 flex flex-col gap-3 md:gap-4 overflow-hidden min-h-0 min-w-[340px] xl:min-w-[500px]">
+        {/* Center Panel - Intelligence Hub */}
+        <div className="flex-1 flex flex-col gap-3 overflow-hidden min-h-0 min-w-[340px] xl:min-w-[500px]">
           <MarketNarrative activeMarket={activeMarket} />
           <MarketConditions activeMarket={activeMarket} />
           
@@ -60,8 +72,8 @@ export default function Dashboard() {
           </div>
         </div>
         
-        {/* Right Panel - Insights, Setups & Risk */}
-        <div className="hidden xl:flex w-[400px] shrink-0 flex-col gap-3 md:gap-4 overflow-hidden min-h-0">
+        {/* Right Panel - Trade Execution & Risk */}
+        <div className="hidden xl:flex w-[400px] shrink-0 flex-col gap-3 overflow-hidden min-h-0">
           <div className="flex-[4] overflow-hidden min-h-0">
             <TradeBias activeMarket={activeMarket} />
           </div>

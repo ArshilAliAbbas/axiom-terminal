@@ -1,69 +1,217 @@
 "use client";
 
+import { useRef, useEffect, useState, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Search, Sun, Command, Terminal, Activity, ShieldAlert, BarChart3, Database, Globe, Cpu, Zap, ArrowRight } from "lucide-react";
+import dynamic from "next/dynamic";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import Lenis from "lenis";
+import { Search, Sun, Command, Terminal, Activity, ShieldAlert, BarChart3, Database, Globe, Cpu, Zap, ArrowRight, Code2, Lock } from "lucide-react";
+
+const Scene3D = dynamic(() => import("./Scene3D"), { ssr: false });
+
+gsap.registerPlugin(ScrollTrigger);
 
 interface LandingPageProps {
   onOpenTerminal: () => void;
 }
 
 export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
-  return (
-    <div className="min-h-screen bg-[#050505] text-[#FAFAFA] font-sans selection:bg-yellow-500/30 selection:text-yellow-100 overflow-x-hidden relative">
-      
-      {/* Background Effects */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden h-[120vh]">
-        {/* Soft green/yellow glow on the left */}
-        <div className="absolute top-[0%] left-[0%] w-[50vw] h-[50vw] bg-yellow-600/10 blur-[130px] rounded-full mix-blend-screen -translate-x-1/2 -translate-y-1/2" />
-        
-        {/* Large intricate dithered circle on the right */}
-        <div className="absolute top-[5%] right-[0%] w-[60vw] h-[60vw] bg-orange-600/20 blur-[120px] rounded-full mix-blend-screen translate-x-1/4 -translate-y-1/4" />
-        <div 
-          className="absolute top-[10%] right-[0%] w-[50vw] h-[50vw] rounded-full opacity-30 mix-blend-screen translate-x-[20%]"
-          style={{
-            backgroundImage: "radial-gradient(circle, #ea580c 0%, transparent 60%)",
-            maskImage: "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoJCTxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSJ3aGl0ZSIvPgoJPC9zdmc+')",
-            WebkitMaskImage: "url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoJCTxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSJ3aGl0ZSIvPgoJPC9zdmc+')",
-            maskSize: '6px',
-            WebkitMaskSize: '6px'
-          }}
-        />
+  const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const dashRef = useRef<HTMLDivElement>(null);
+  const descRef = useRef<HTMLDivElement>(null);
+  const featureCardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const tradeRef = useRef<HTMLDivElement>(null);
+  const codeBlockRef = useRef<HTMLDivElement>(null);
+  const rightContentRef = useRef<HTMLDivElement>(null);
+  const proTitleRef = useRef<HTMLHeadingElement>(null);
+  const proCardsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const badgeRef = useRef<HTMLDivElement>(null);
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
 
-        {/* Global Noise Overlay */}
-        <div className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
-      </div>
+  // Code Simulation
+  const [codeLines, setCodeLines] = useState<number>(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCodeLines(prev => (prev < 5 ? prev + 1 : 0));
+    }, 1500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Lenis Smooth Scroll + GSAP ScrollTrigger
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    lenis.on("scroll", ScrollTrigger.update);
+
+    gsap.ticker.add((time) => {
+      lenis.raf(time * 1000);
+    });
+    gsap.ticker.lagSmoothing(0);
+
+    // --- Hero entrance ---
+    const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+    tl.fromTo(badgeRef.current, { opacity: 0, scale: 0.8, filter: "blur(10px)" }, { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.6 })
+      .fromTo(h1Ref.current, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.8 }, "-=0.3")
+      .fromTo(subRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7 }, "-=0.5")
+      .fromTo(ctaRef.current, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7 }, "-=0.4");
+
+    // --- Hero parallax on scroll ---
+    if (heroRef.current) {
+      gsap.to(heroRef.current, {
+        y: 250,
+        opacity: 0,
+        ease: "none",
+        scrollTrigger: {
+          trigger: heroRef.current,
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+    }
+
+    // --- Dashboard parallax ---
+    if (dashRef.current) {
+      gsap.fromTo(dashRef.current,
+        { y: 120, scale: 0.88, rotateZ: 3, opacity: 0 },
+        {
+          y: 0, scale: 1, rotateZ: 0, opacity: 1,
+          duration: 1,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: dashRef.current,
+            start: "top 90%",
+            end: "top 30%",
+            scrub: 1,
+          },
+        }
+      );
+    }
+
+    // --- Description block ---
+    if (descRef.current) {
+      gsap.fromTo(descRef.current,
+        { opacity: 0, y: 60 },
+        {
+          opacity: 1, y: 0, duration: 1,
+          scrollTrigger: { trigger: descRef.current, start: "top 80%", end: "top 40%", scrub: 1 },
+        }
+      );
+    }
+
+    // --- Feature cards staggered ---
+    featureCardsRef.current.forEach((card, i) => {
+      if (!card) return;
+      gsap.fromTo(card,
+        { opacity: 0, y: 50 },
+        {
+          opacity: 1, y: 0, duration: 0.8,
+          delay: i * 0.15,
+          scrollTrigger: { trigger: card, start: "top 85%", toggleActions: "play none none none" },
+        }
+      );
+    });
+
+    // --- "Anybody can trade" section ---
+    if (tradeRef.current) {
+      const heading = tradeRef.current.querySelector("h2");
+      const para = tradeRef.current.querySelector("p");
+      const toggles = tradeRef.current.querySelector("[data-toggles]");
+      if (heading) gsap.fromTo(heading, { opacity: 0, scale: 0.9, y: 40 }, { opacity: 1, scale: 1, y: 0, duration: 0.8, scrollTrigger: { trigger: heading, start: "top 80%" } });
+      if (para) gsap.fromTo(para, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.7, delay: 0.1, scrollTrigger: { trigger: para, start: "top 85%" } });
+      if (toggles) gsap.fromTo(toggles, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, delay: 0.2, scrollTrigger: { trigger: toggles, start: "top 85%" } });
+    }
+
+    // --- Code block slide in ---
+    if (codeBlockRef.current) {
+      gsap.fromTo(codeBlockRef.current,
+        { opacity: 0, x: -80, rotateY: 15 },
+        { opacity: 1, x: 0, rotateY: 0, duration: 1, ease: "power2.out", scrollTrigger: { trigger: codeBlockRef.current, start: "top 80%" } }
+      );
+    }
+    if (rightContentRef.current) {
+      gsap.fromTo(rightContentRef.current,
+        { opacity: 0, x: 80 },
+        { opacity: 1, x: 0, duration: 1, ease: "power2.out", delay: 0.2, scrollTrigger: { trigger: rightContentRef.current, start: "top 80%" } }
+      );
+    }
+
+    // --- Pro section ---
+    if (proTitleRef.current) {
+      gsap.fromTo(proTitleRef.current,
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.8, scrollTrigger: { trigger: proTitleRef.current, start: "top 80%" } }
+      );
+    }
+    proCardsRef.current.forEach((card, i) => {
+      if (!card) return;
+      gsap.fromTo(card,
+        { opacity: 0, y: 60, rotateX: 8 },
+        {
+          opacity: 1, y: 0, rotateX: 0, duration: 0.8,
+          delay: i * 0.12,
+          scrollTrigger: { trigger: card, start: "top 85%" },
+        }
+      );
+    });
+
+    return () => {
+      lenis.destroy();
+      ScrollTrigger.getAll().forEach(t => t.kill());
+      gsap.ticker.remove(lenis.raf);
+    };
+  }, []);
+
+  const setProCard = useCallback((i: number) => (el: HTMLDivElement | null) => { proCardsRef.current[i] = el; }, []);
+  const setFeatureCard = useCallback((i: number) => (el: HTMLDivElement | null) => { featureCardsRef.current[i] = el; }, []);
+
+  return (
+    <div ref={containerRef} className="min-h-screen bg-[#010101] text-[#FAFAFA] font-sans selection:bg-[#fce075]/30 selection:text-yellow-100 overflow-x-hidden relative">
+      
+      {/* Three.js 3D Background */}
+      <Scene3D />
+      
+      {/* Subtle noise overlay */}
+      <div className="fixed inset-0 z-[1] pointer-events-none opacity-[0.03] mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.8%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
 
       {/* Navbar */}
-      <nav className="sticky top-0 w-full z-50 border-b border-white/10 bg-[#050505]/80 backdrop-blur-md supports-[backdrop-filter]:bg-[#050505]/60">
-        <div className="max-w-7xl mx-auto px-6 h-[60px] flex items-center justify-between">
+      <nav className="sticky top-0 w-full z-50 border-b border-white/5 bg-[#010101]/60 backdrop-blur-xl supports-[backdrop-filter]:bg-[#010101]/40 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+        <div className="max-w-7xl mx-auto px-6 h-[65px] flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-              <div className="w-5 h-5 rounded flex items-center justify-center border border-white/20 bg-white/5">
-                 <Terminal className="w-3 h-3 text-white" />
+            <Link href="/" className="flex items-center gap-3 group">
+              <div className="w-6 h-6 rounded bg-[#fce075]/10 flex items-center justify-center border border-[#fce075]/30 shadow-[0_0_15px_rgba(252,224,117,0.2)] group-hover:rotate-90 transition-transform duration-300">
+                 <Terminal className="w-3.5 h-3.5 text-[#fce075]" />
               </div>
-              <span className="text-[15px] tracking-widest uppercase font-extrabold text-white">
+              <span className="text-[15px] tracking-widest uppercase font-black text-white group-hover:text-[#fce075] transition-colors">
                 Axiom
               </span>
-            </div>
+            </Link>
             
-            <div className="hidden md:flex items-center gap-6 text-[12px] font-bold uppercase tracking-widest text-white/50">
-              <a href="#features" className="hover:text-white transition-colors">Features</a>
-              <a href="#architecture" className="hover:text-white transition-colors">Architecture</a>
+            <div className="hidden md:flex items-center gap-8 text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/40">
+              <a href="#features" className="hover:text-white transition-colors relative after:absolute after:-bottom-2 after:left-0 after:w-0 after:h-0.5 after:bg-[#fce075] hover:after:w-full after:transition-all">Features</a>
+              <a href="#architecture" className="hover:text-white transition-colors relative after:absolute after:-bottom-2 after:left-0 after:w-0 after:h-0.5 after:bg-[#fce075] hover:after:w-full after:transition-all">Architecture</a>
             </div>
           </div>
           
           <div className="flex items-center gap-4">
-            <button className="hidden md:flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full px-3 py-1.5 transition-colors group">
-              <Search className="w-4 h-4 text-white/30 group-hover:text-white/60 transition-colors" />
-              <span className="text-sm font-medium text-white/30 group-hover:text-white/60 transition-colors">Search Cmds</span>
-              <div className="flex items-center gap-0.5 ml-8 text-[10px] text-white/40 bg-black/40 rounded px-1.5 py-0.5 border border-white/5">
-                <Command className="w-3 h-3" />
+            <button className="hidden md:flex items-center gap-3 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 rounded-full px-4 py-2 transition-all group shadow-inner">
+              <Search className="w-3.5 h-3.5 text-white/30 group-hover:text-[#fce075] transition-colors" />
+              <span className="text-[12px] font-bold text-white/30 group-hover:text-white/80 transition-colors uppercase tracking-wider">Search Cmds</span>
+              <div className="flex items-center gap-1 ml-6 text-[9px] text-[#fce075]/70 bg-[#fce075]/10 rounded px-1.5 py-0.5 border border-[#fce075]/20 font-mono">
+                <Command className="w-2.5 h-2.5" />
                 <span>K</span>
               </div>
             </button>
             <div className="flex items-center gap-1 text-white/40">
-              <button className="p-2 hover:text-white hover:bg-white/5 rounded-full transition-colors flex items-center gap-1">
+              <button className="p-2 hover:text-[#fce075] hover:bg-[#fce075]/10 rounded-full transition-all flex items-center justify-center">
                 <Sun className="w-[18px] h-[18px]" />
               </button>
             </div>
@@ -71,91 +219,99 @@ export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <main className="relative z-10 pt-28 pb-20">
-        <div className="max-w-7xl mx-auto px-6">
+      <main className="relative z-10 pt-24 pb-20">
+        <div className="max-w-7xl mx-auto px-6 relative">
           
-          <div className="max-w-5xl pt-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="inline-flex items-center border border-[#fce075]/40 bg-[#0a0a0a]/50 backdrop-blur-sm rounded-full px-4 py-1.5 mb-10 shadow-[0_0_15px_rgba(252,224,117,0.15)]">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse" />
-                <span className="text-[12px] font-bold tracking-widest uppercase text-[#fce075]">
-                  System Online • Institutional Grade
+          {/* Hero — GSAP parallax */}
+          <div ref={heroRef} className="max-w-5xl pt-10 will-change-transform">
+            <div ref={badgeRef} style={{ opacity: 0 }}>
+              <div className="inline-flex items-center border border-[#fce075]/40 bg-[#0a0a0a]/80 backdrop-blur-md rounded-full px-5 py-2 mb-12 shadow-[0_0_25px_rgba(252,224,117,0.2)]">
+                <span className="relative flex h-2.5 w-2.5 mr-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-[11px] font-black tracking-[0.2em] uppercase text-[#fce075]">
+                  System Online // Institutional Grade
                 </span>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-5xl md:text-7xl lg:text-[80px] font-black tracking-tight text-[#f1f1f1] leading-[1.08] mb-12"
+            <h1 
+              ref={h1Ref}
+              style={{ opacity: 0 }}
+              className="text-6xl md:text-8xl lg:text-[100px] font-black tracking-tighter text-[#ffffff] leading-[0.95] mb-10"
             >
-              Execute precision trades,<br className="hidden md:block" />
-              with absolute <span className="text-[#fce075]">clarity.</span>
-            </motion.h1>
+              Execute <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/40">precision trades,</span><br className="hidden md:block" />
+              with absolute <span className="italic text-transparent bg-clip-text bg-gradient-to-br from-[#fce075] to-orange-400 animate-[glowPulse_4s_ease-in-out_infinite]">clarity.</span>
+            </h1>
 
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.15 }}
-              className="text-lg text-white/50 mb-12 max-w-2xl font-medium leading-relaxed"
+            <p
+              ref={subRef}
+              style={{ opacity: 0 }}
+              className="text-xl md:text-2xl text-white/50 mb-16 max-w-3xl font-medium leading-[1.6]"
             >
               Aggregate order flow, decipher macro narratives with AI, and execute with perfect mathematical edge. The unfair advantage institutional traders hide.
-            </motion.p>
+            </p>
 
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="flex flex-col sm:flex-row items-center gap-4 mb-24"
+            <div 
+              ref={ctaRef}
+              style={{ opacity: 0 }}
+              className="flex flex-col sm:flex-row items-center gap-6 mb-32 relative z-20"
             >
               <button
                 onClick={onOpenTerminal}
-                className="w-full sm:w-auto px-8 py-3.5 bg-[#fce075] hover:bg-[#eab308] text-black uppercase tracking-[0.1em] font-extrabold text-[13px] rounded transition-all flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(252,224,117,0.2)]"
+                className="w-full sm:w-auto px-10 py-5 bg-gradient-to-b from-[#fce075] to-[#dca31f] text-black uppercase tracking-[0.15em] font-black text-[14px] rounded-xl transition-all flex items-center justify-center gap-3 relative overflow-hidden group border border-[#fce075]/50 cursor-pointer hover:scale-105 hover:shadow-[0_0_40px_rgba(252,224,117,0.4)] active:scale-95"
               >
-                Launch Terminal
-                <ArrowRight className="w-4 h-4 ml-1" />
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"/>
+                <span className="relative z-10">Launch Terminal</span>
+                <ArrowRight className="w-5 h-5 relative z-10" />
               </button>
               <a 
                 href="#features"
-                className="w-full sm:w-auto px-8 py-3.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white font-bold uppercase tracking-[0.1em] text-[13px] rounded transition-all flex items-center justify-center shadow-sm"
+                className="w-full sm:w-auto px-10 py-5 bg-white/[0.03] border border-white/10 text-white font-extrabold uppercase tracking-[0.15em] text-[14px] rounded-xl transition-all flex items-center justify-center shadow-2xl backdrop-blur-md cursor-pointer hover:scale-105 hover:bg-white/[0.1] active:scale-95"
               >
                 Explore Intel
               </a>
-            </motion.div>
+            </div>
           </div>
 
-          {/* Detailed Mockup Interface (Trading Dashboard) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="w-full bg-[#0a0a0a]/90 backdrop-blur-3xl rounded-2xl border border-white/[0.05] shadow-[0_40px_100px_-20px_rgba(0,0,0,1)] overflow-hidden flex flex-col font-sans"
+          {/* Dashboard — GSAP scrub parallax */}
+          <div 
+            ref={dashRef}
+            style={{ opacity: 0 }}
+            className="w-full bg-[#050505]/80 backdrop-blur-3xl rounded-3xl border border-white/[0.08] shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] overflow-hidden flex flex-col font-sans relative will-change-transform"
           >
+            {/* Top Shine */}
+            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#fce075]/50 to-transparent"></div>
+
             {/* Window Controls */}
-            <div className="h-12 border-b border-white/5 bg-white/[0.02] flex items-center px-4 gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/80 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/80 shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
-              <div className="w-3 h-3 rounded-full bg-green-500/80 shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
-              <div className="ml-4 text-[10.5px] text-white/30 font-mono tracking-widest">axiom-terminal@trade-server-01: ~</div>
-              <div className="ml-auto w-6 h-6 rounded bg-white/5 flex items-center justify-center opacity-60">
-                 <Terminal className="w-3.5 h-3.5 text-white" />
+            <div className="h-14 border-b border-white/10 bg-white/[0.01] flex items-center px-6 gap-2.5">
+              <div className="flex gap-2">
+                 <div className="w-3.5 h-3.5 rounded-full bg-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]" />
+                 <div className="w-3.5 h-3.5 rounded-full bg-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.6)]" />
+                 <div className="w-3.5 h-3.5 rounded-full bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.6)]" />
+              </div>
+              <div className="ml-6 text-[11px] text-white/40 font-mono tracking-[0.1em] flex items-center gap-2">
+                <Lock className="w-3 h-3 text-emerald-400" />
+                axiom-terminal@trade-server-01: ~
+              </div>
+              <div className="ml-auto w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center opacity-80 backdrop-blur-md">
+                 <Terminal className="w-4 h-4 text-[#fce075]" />
               </div>
             </div>
 
             {/* Dashboard Content */}
-            <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 h-auto md:h-[540px] overflow-hidden bg-[#050505]">
+            <div className="p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 h-auto md:h-[600px] overflow-hidden bg-[#030303] relative">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CgkJPHBhdGggZD0iTTAgMGgyMHYyMEgweiIgZmlsbD0ibm9uZSIvPgoJCTxwYXRoIGQ9Ik0wIDE5LjVoMjBNMTkuNSAwdi0yMCIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDIpIiBzdHJva2Utd2lkdGg9IjEiLz4KCTwvc3ZnPg==')] opacity-50" />
+              
               {/* Left Column */}
-              <div className="flex flex-col gap-4">
-                <div className="flex-1 bg-white/[0.03] border border-white/5 rounded-xl p-4 relative group hover:border-white/20 transition-colors">
-                   <div className="flex items-center gap-2 mb-5">
-                     <Globe className="w-4 h-4 text-blue-400" />
-                     <h3 className="text-xs font-bold uppercase tracking-widest text-white/80">Macro Overview</h3>
+              <div className="flex flex-col gap-6 relative z-10">
+                <div className="flex-1 bg-white/[0.02] border border-white/5 rounded-2xl p-6 relative group transition-all duration-300 shadow-xl backdrop-blur-xl hover:border-white/20 hover:-translate-y-1">
+                   <div className="flex items-center gap-3 mb-6">
+                     <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                       <Globe className="w-4 h-4 text-blue-400" />
+                     </div>
+                     <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/80">Macro Overview</h3>
                    </div>
                    <div className="space-y-4">
                      {[
@@ -163,11 +319,11 @@ export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
                        { l: "US10Y", v: "4.32%", c: "+0.05", up: true },
                        { l: "SPX", v: "5,123.4", c: "-0.45%", up: false },
                      ].map((item, i) => (
-                       <div key={i} className="flex justify-between items-center text-sm border-b border-white/5 pb-3">
-                         <span className="text-white/50">{item.l}</span>
+                       <div key={i} className="flex justify-between items-center text-sm border-b border-white/5 pb-4 last:border-0 last:pb-0">
+                         <span className="text-white/50 font-bold">{item.l}</span>
                          <div className="flex items-center gap-3">
-                           <span className="font-mono text-white/90">{item.v}</span>
-                           <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${item.up ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                           <span className="font-mono text-white/90 text-[15px]">{item.v}</span>
+                           <span className={`text-[10px] px-2 py-1 rounded-sm font-bold font-mono ${item.up ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
                              {item.c}
                            </span>
                          </div>
@@ -176,266 +332,352 @@ export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
                    </div>
                 </div>
                 
-                <div className="h-52 bg-white/[0.03] border border-white/5 rounded-xl p-4 group hover:border-white/20 transition-colors">
-                  <div className="flex items-center gap-2 mb-4">
-                    <ShieldAlert className="w-4 h-4 text-[#fce075]" />
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-[#fce075]">Risk Matrix</h3>
+                <div className="h-[240px] bg-white/[0.02] border border-white/5 rounded-2xl p-6 group transition-all duration-300 shadow-xl backdrop-blur-xl relative overflow-hidden hover:border-[#fce075]/30 hover:-translate-y-1">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#fce075]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="flex items-center gap-3 mb-4 relative z-10">
+                    <div className="w-8 h-8 rounded-lg bg-[#fce075]/10 flex items-center justify-center border border-[#fce075]/20">
+                      <ShieldAlert className="w-4 h-4 text-[#fce075]" />
+                    </div>
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-[#fce075]">Risk Matrix</h3>
                   </div>
-                  <div className="flex justify-center items-center h-28">
-                     <div className="relative w-28 h-28 rounded-full border-4 border-white/5 flex items-center justify-center">
+                  <div className="flex justify-center items-center h-32 relative z-10">
+                     <div className="relative w-32 h-32 rounded-full border-[6px] border-[#0a0a0a] flex items-center justify-center shadow-[0_0_30px_rgba(252,224,117,0.1)_inset]">
                        <svg className="absolute inset-0 w-full h-full -rotate-90">
-                         <circle cx="54" cy="54" r="50" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-[#fce075]" strokeDasharray="314" strokeDashoffset="70" />
+                         <circle cx="60" cy="60" r="56" stroke="currentColor" strokeWidth="6" fill="transparent" className="text-[#fce075] animate-[riskPulse_4s_ease-in-out_infinite]" style={{ filter: "drop-shadow(0px 0px 8px rgba(252,224,117,0.6))" }} strokeDasharray="351" />
                        </svg>
-                       <span className="text-2xl font-bold">78</span>
+                       <div className="text-center">
+                         <span className="text-4xl font-black text-white">78</span>
+                         <span className="block text-[8px] text-[#fce075] uppercase tracking-widest font-bold mt-1">Factor</span>
+                       </div>
                      </div>
                   </div>
-                  <div className="text-center mt-3 text-[10px] text-white/40 uppercase tracking-widest">Exposure Factor</div>
                 </div>
               </div>
 
               {/* Center & Right Column */}
-              <div className="hidden md:flex flex-col col-span-2 gap-4">
-                <div className="flex-[2] bg-white/[0.03] border border-white/5 rounded-xl p-5 relative group hover:border-white/20 transition-colors flex flex-col">
-                   <div className="flex items-center justify-between mb-5">
-                     <div className="flex items-center gap-2">
-                       <BarChart3 className="w-4 h-4 text-purple-400" />
-                       <h3 className="text-xs font-bold uppercase tracking-widest text-white/80">Actionable Plan</h3>
+              <div className="hidden md:flex flex-col col-span-2 gap-6 relative z-10">
+                <div className="flex-[2] bg-white/[0.02] border border-white/5 rounded-2xl p-6 relative group transition-all duration-300 flex flex-col shadow-xl backdrop-blur-xl hover:border-white/20">
+                   <div className="flex items-center justify-between mb-6">
+                     <div className="flex items-center gap-3">
+                       <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                         <BarChart3 className="w-4 h-4 text-purple-400" />
+                       </div>
+                       <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/80">Actionable Plan</h3>
                      </div>
-                     <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded font-bold tracking-widest animate-pulse">LIVE</span>
+                     <span className="text-[10px] bg-red-500/20 border border-red-500/40 text-red-400 px-3 py-1.5 rounded-sm font-black tracking-[0.2em] animate-pulse flex items-center gap-2">
+                       <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                       LIVE
+                     </span>
                    </div>
-                   <div className="bg-[#020202] border border-white/10 rounded-lg p-5 font-mono text-[13px] leading-relaxed text-emerald-400/80 flex-1 shadow-inner overflow-hidden">
-                     <span className="text-purple-400">async function</span> executeMarketEdge() {'{\n'}
-                     {'  '}const narrative = <span className="text-[#fce075]">await</span> ai.getSentiment("FED_FUNDS");{'\n'}
-                     {'  '}if (narrative.isHawkish && structure.isBroken) {'{\n'}
-                     {'    '}<span className="text-blue-400">executeShort</span>({'{'} target: "NQ", size: "2%" {'}'});{'\n'}
-                     {'  }'}{'\n'}
-                     {'}'}
-                     <br/><br/>
-                     <span className="text-white/40">// AI Output: High probability mean reversion setup detected. Wait for liquidity sweep.</span>
+                   <div className="bg-[#000000] border border-white/10 rounded-xl p-6 font-mono text-[14px] leading-[1.8] text-emerald-400/90 flex-1 shadow-[inset_0_0_20px_rgba(0,0,0,1)] relative overflow-hidden">
+                     <div className="absolute top-0 right-0 p-4 opacity-20"><Code2 className="w-20 h-20 text-white" /></div>
+                     
+                     <div style={{ opacity: codeLines >= 0 ? 1 : 0, transition: "opacity 0.3s" }}><span className="text-purple-400 font-bold">async function</span> <span className="text-blue-300">executeMarketEdge</span>() {'{'}</div>
+                     <div style={{ opacity: codeLines >= 1 ? 1 : 0, transition: "opacity 0.3s" }}>{'  '}const narrative = <span className="text-[#fce075]">await</span> ai.getSentiment(&quot;FED_FUNDS&quot;);</div>
+                     <div style={{ opacity: codeLines >= 2 ? 1 : 0, transition: "opacity 0.3s" }}>{'  '}if (narrative.isHawkish &amp;&amp; structure.isBroken) {'{'}</div>
+                     <div style={{ opacity: codeLines >= 3 ? 1 : 0, transition: "opacity 0.3s" }}>{'    '}<span className="text-blue-400 font-bold">executeShort</span>({'{'} target: &quot;NQ&quot;, size: &quot;2%&quot; {'}'});</div>
+                     <div style={{ opacity: codeLines >= 4 ? 1 : 0, transition: "opacity 0.3s" }}>{'  }'}</div>
+                     <div style={{ opacity: codeLines >= 5 ? 1 : 0, transition: "opacity 0.3s" }}>{'}'}</div>
+                     
+                     <br/>
+                     <div style={{ opacity: codeLines >= 5 ? 1 : 0, transition: "opacity 0.3s" }} className="text-white/40 border-l-2 border-[#fce075]/40 pl-4 mt-2">
+                       // AI Output: High probability mean reversion setup detected. Wait for liquidity sweep.
+                     </div>
+                     <div className="inline-block w-2.5 h-4 bg-[#fce075] ml-1 align-middle mt-2 animate-[blink_1s_steps(1)_infinite]" />
                    </div>
                 </div>
 
-                <div className="h-40 grid grid-cols-2 gap-4">
-                  <div className="bg-white/[0.03] border border-white/5 rounded-xl p-5 flex flex-col justify-between group hover:border-white/20 transition-colors">
-                    <div className="flex items-center gap-2 mb-2">
-                       <Database className="w-4 h-4 text-cyan-400" />
-                       <h3 className="text-xs font-bold uppercase tracking-widest text-white/80">Data Stream</h3>
-                     </div>
-                     <div className="text-4xl font-light text-white font-mono">14.2M<span className="text-xl text-white/40">/s</span></div>
-                     <div className="w-full h-1.5 bg-white/10 rounded-full mt-2 overflow-hidden">
-                       <div className="h-full bg-cyan-400 w-[85%]" />
-                     </div>
+                <div className="h-[200px] grid grid-cols-2 gap-6">
+                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 flex flex-col justify-between group transition-all duration-300 shadow-xl backdrop-blur-xl relative overflow-hidden hover:border-cyan-400/30 hover:-translate-y-1">
+                     <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                     <div className="flex items-center gap-3 mb-2 relative z-10">
+                        <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                          <Database className="w-4 h-4 text-cyan-400" />
+                        </div>
+                        <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/80">Data Stream</h3>
+                      </div>
+                      <div className="text-[42px] font-black text-white font-mono tracking-tighter relative z-10">14.2M<span className="text-xl text-white/40 tracking-normal">/s</span></div>
+                      <div className="w-full h-2 bg-white/10 rounded-full mt-2 overflow-hidden relative z-10">
+                        <div className="h-full bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.8)] animate-[dataStream_5s_ease-in-out_infinite]" />
+                      </div>
                   </div>
-                  <div className="bg-white/[0.03] border border-white/5 rounded-xl p-5 flex flex-col justify-between group hover:border-white/20 transition-colors">
-                    <div className="flex items-center gap-2 mb-2">
-                       <Activity className="w-4 h-4 text-red-500" />
-                       <h3 className="text-xs font-bold uppercase tracking-widest text-white/80">Volatility Scope</h3>
-                     </div>
-                     <div className="text-3xl font-light text-white tracking-wide">Elevated</div>
-                     <div className="flex gap-1.5 mt-2">
-                       {[...Array(10)].map((_, i) => (
-                         <div key={i} className={`h-1.5 flex-1 rounded-full ${i < 8 ? 'bg-red-500/80' : 'bg-white/10'}`} />
-                       ))}
-                     </div>
+                  <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 flex flex-col justify-between group transition-all duration-300 shadow-xl backdrop-blur-xl relative overflow-hidden hover:border-red-500/30 hover:-translate-y-1">
+                     <div className="absolute inset-0 bg-gradient-to-t from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                     <div className="flex items-center gap-3 mb-2 relative z-10">
+                        <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                          <Activity className="w-4 h-4 text-red-500" />
+                        </div>
+                        <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white/80">Volatility Scope</h3>
+                      </div>
+                      <div className="text-[36px] font-black text-white tracking-tight relative z-10">Elevated</div>
+                      <div className="flex gap-2 mt-2 relative z-10 h-6 items-end">
+                        {[...Array(10)].map((_, i) => (
+                          <div 
+                            key={i}
+                            className={`w-full flex-1 rounded-sm ${i < 8 ? 'bg-red-500/90 shadow-[0_0_5px_rgba(239,68,68,0.8)]' : 'bg-white/10'}`}
+                            style={{ 
+                              height: '100%',
+                              animation: `volBar ${1 + i * 0.2}s ease-in-out ${i * 0.1}s infinite alternate`
+                            }}
+                          />
+                        ))}
+                      </div>
                   </div>
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </main>
 
-      {/* Description Section aligned with the overall aesthetic */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 pt-32 pb-40 text-center md:text-left">
-         <p className="text-[32px] md:text-[42px] leading-[1.3] font-medium text-[#d1d1d1] tracking-tight mb-16">
-            Axiom is an <span className="text-[#fce075] font-bold">Institutional</span> trading framework for <span className="text-[#fce075] font-bold">Professionals</span>, beautifully engineered by <span className="text-[#fce075] font-bold">Softpulser</span>. Elevating your execution speed with perfect clarity at its core.
-         </p>
+      {/* Description Section */}
+      <section className="relative z-10 max-w-5xl mx-auto px-6 pt-40 pb-40 text-center md:text-left">
+         <div ref={descRef} style={{ opacity: 0 }} className="will-change-transform">
+           <p className="text-[36px] md:text-[48px] leading-[1.2] font-semibold text-[#f1f1f1] tracking-tighter mb-20 max-w-4xl">
+              Axiom is an <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#fce075] to-orange-400 font-black">Institutional</span> trading framework for <span className="text-[#fce075] font-black">Professionals</span>, beautifully engineered by <span className="text-[#fce075] font-black">Softpulser</span>. Elevating your execution speed with perfect clarity at its core.
+           </p>
+         </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-white/10 pt-16">
-            <div>
-              <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-6">
-                <Globe className="w-6 h-6 text-white/60" />
+         <div id="features" className="grid grid-cols-1 md:grid-cols-3 gap-10 border-t border-white/5 pt-20 relative">
+            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+            
+            {[ 
+               { icon: Globe, title: "Live Order Flow", desc: "Direct market data integration with sub-millisecond parsing and analysis logic built right in." },
+               { icon: Cpu, title: "AI Narrative Core", desc: "Extract sentiment directly from fed speeches, news drops, and financial events locally." },
+               { icon: Zap, title: "Terminal Speed", desc: "Built from the ground up for maximum visual performance without web bloat." }
+            ].map((item, i) => (
+              <div 
+                 key={i} 
+                 ref={setFeatureCard(i)}
+                 style={{ opacity: 0 }}
+                 className="group p-8 rounded-3xl bg-white/[0.01] hover:bg-white/[0.03] border border-white/[0.02] hover:border-white/10 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 relative overflow-hidden will-change-transform"
+              >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-[#fce075]/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-14 h-14 bg-[#111] shadow-inner border border-white/10 rounded-2xl flex items-center justify-center mb-8 group-hover:border-[#fce075]/30 transition-colors">
+                  <item.icon className="w-6 h-6 text-white/50 group-hover:text-[#fce075] transition-colors duration-300" />
+                </div>
+                <h3 className="text-xl font-black text-white mb-4 tracking-tight">{item.title}</h3>
+                <p className="text-[15px] text-white/50 leading-[1.7] group-hover:text-white/80 transition-colors">{item.desc}</p>
               </div>
-              <h3 className="text-lg font-bold text-white mb-3">Live Order Flow</h3>
-              <p className="text-sm text-white/50 leading-relaxed">Direct market data integration with sub-millisecond parsing and analysis logic built right in.</p>
-            </div>
-            <div>
-              <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-6">
-                <Cpu className="w-6 h-6 text-white/60" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-3">AI Narrative Core</h3>
-              <p className="text-sm text-white/50 leading-relaxed">Extract sentiment directly from fed speeches, news drops, and financial events locally.</p>
-            </div>
-            <div>
-              <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center mb-6">
-                <Zap className="w-6 h-6 text-white/60" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-3">Terminal Speed</h3>
-              <p className="text-sm text-white/50 leading-relaxed">Built from the ground up for maximum visual performance without web bloat.</p>
-            </div>
+            ))}
          </div>
       </section>
 
       {/* Anybody can trade section */}
-      <section className="relative z-10 max-w-6xl mx-auto px-6 py-32 border-t border-white/5">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-[40px] font-bold text-[#fce075] mb-6 tracking-tight">Anybody can trade.</h2>
-          <p className="text-white/80 font-medium max-w-2xl mx-auto text-[15px] leading-relaxed">
-            Native support for Crypto, FX & Equities, offering intuitive, convenient and extensive intelligence for retail traders, quant developers, and AI agents.
+      <section 
+        ref={tradeRef}
+        className="relative z-10 max-w-[1400px] w-full mx-auto px-6 py-40 border-t border-white/5 overflow-hidden"
+      >
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[1px] bg-gradient-to-r from-transparent via-[#fce075]/20 to-transparent" />
+        
+        <div className="text-center mb-24 relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-2xl bg-[#fce075]/5 blur-[100px] rounded-full -z-10" />
+          <h2 className="text-5xl md:text-[60px] font-black text-[#fce075] mb-8 tracking-tighter">Anybody can trade.</h2>
+          <p className="text-white/60 font-medium max-w-3xl mx-auto text-[18px] leading-relaxed">
+            Native support for Crypto, FX & Equities, offering intuitive, convenient and extensive intelligence for <span className="text-white font-bold">retail traders, quant developers, and AI agents.</span>
           </p>
-          <div className="flex items-center justify-center gap-4 mt-8 text-sm font-bold text-white/50 tracking-wide">
-            <span className="text-[#fce075]">Trader</span>
-            <span className="text-white/20">→</span>
-            <span>Quant</span>
-            <span className="text-white/20">→</span>
-            <span>Automation</span>
+          <div data-toggles className="flex items-center justify-center gap-6 mt-12 text-[15px] font-black text-white/30 tracking-[0.2em] uppercase">
+            <span className="text-[#fce075] cursor-pointer transition-colors shadow-[0_0_20px_rgba(252,224,117,0.4)] px-4 py-2 rounded-full border border-[#fce075]/20 bg-[#fce075]/10 hover:scale-110 active:scale-95 transition-transform">Trader</span>
+            <span className="text-white/10">→</span>
+            <span className="cursor-pointer hover:text-[#fce075] hover:scale-110 active:scale-95 transition-all">Quant</span>
+            <span className="text-white/10">→</span>
+            <span className="cursor-pointer hover:text-[#fce075] hover:scale-110 active:scale-95 transition-all">Automation</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
           {/* Left Code Block */}
-          <div className="bg-[#121212] border border-white/5 rounded-2xl p-6 font-mono text-[13px] text-white/70 shadow-[0_20px_40px_rgba(0,0,0,0.6)] relative overflow-hidden">
-             <div className="absolute top-5 right-5 text-white/20 hover:text-white/60 cursor-pointer transition-colors">
-               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          <div 
+             ref={codeBlockRef}
+             style={{ opacity: 0 }}
+             className="bg-[#0c0c0c] border border-white/10 rounded-3xl p-8 font-mono text-[14px] text-white/70 shadow-[0_30px_60px_rgba(0,0,0,0.8)] relative overflow-hidden group hover:border-[#fce075]/30 transition-colors will-change-transform"
+          >
+             <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+             <div className="absolute top-6 right-6 text-white/20 hover:text-[#fce075] cursor-pointer transition-colors">
+               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
              </div>
-             <div className="text-white/40 mb-5 leading-loose">
-               ---<br/>
-               <span className="text-blue-300">strategy:</span> <span className="text-white">Mean Reversion</span><br/>
-               ---
+             <div className="text-white/30 mb-8 leading-[2] border-b border-white/5 pb-6">
+               <span className="text-pink-500/50">---</span><br/>
+               <span className="text-blue-300/80 font-bold">strategy:</span> <span className="text-white font-bold tracking-wide">Mean Reversion</span><br/>
+               <span className="text-pink-500/50">---</span>
              </div>
-             <div className="leading-[1.8]">
-               <span className="text-blue-400 font-bold">##</span> <span className="text-blue-300 font-bold">Overview</span><br/><br/>
-               I love **AxiomTerminal**!<br/><br/>
-               <span className="text-purple-400">```ts tab="Tab 1"</span><br/>
-               <span className="text-purple-400">console</span>.log(<span className="text-[#fce075]">"Execute Long"</span>)<br/>
-               <span className="text-purple-400">```</span><br/><br/>
-               <span className="text-purple-400">```ts tab="Tab 2"</span><br/>
-               <span className="text-pink-500">return</span> <span className="text-blue-400">0</span>;<br/>
-               <span className="text-purple-400">```</span>
+             <div className="leading-[2]">
+               <span className="text-blue-400 font-bold text-lg">##</span> <span className="text-white font-bold text-lg tracking-tight">Overview</span><br/><br/>
+               I love <span className="text-[#fce075] font-bold bg-[#fce075]/10 px-2 py-0.5 rounded">**AxiomTerminal**</span>!<br/><br/>
+               <div className="bg-[#000] p-4 rounded-xl border border-white/5 mt-4">
+                 <span className="text-purple-400">{"`"}ts tab=&quot;Tab 1&quot;</span><br/>
+                 <span className="text-purple-400 font-bold">console</span>.log(<span className="text-[#fce075]">&quot;Execute Long&quot;</span>)<br/>
+                 <span className="text-purple-400">{"`"}</span><br/><br/>
+                 <span className="text-purple-400">{"`"}ts tab=&quot;Tab 2&quot;</span><br/>
+                 <span className="text-pink-500 font-bold">return</span> <span className="text-blue-400 font-bold">0</span>;<br/>
+                 <span className="text-purple-400">{"`"}</span>
+               </div>
              </div>
           </div>
 
           {/* Right Content */}
-          <div className="pl-0 lg:pl-10">
-            <h3 className="text-[28px] font-bold text-white mb-6 tracking-tight">The familiar structure.</h3>
-            <p className="text-white/80 text-[15px] mb-8 leading-relaxed font-medium">It is real-time processing, with additional features seamlessly composing into the execution.</p>
+          <div 
+             ref={rightContentRef}
+             style={{ opacity: 0 }}
+             className="pl-0 lg:pl-10 will-change-transform"
+          >
+            <h3 className="text-[36px] font-black text-white mb-8 tracking-tighter">The familiar structure.</h3>
+            <p className="text-white/50 text-[18px] mb-12 leading-relaxed font-medium">It is real-time processing, with additional features seamlessly composing into the execution without bloated syntax.</p>
             
-            <ul className="space-y-3.5 text-[13.5px] text-white/60 font-medium">
-              <li className="flex items-center gap-3"><div className="w-1 h-1 rounded-full bg-white/40 shrink-0" /> Live market data indexing</li>
-              <li className="flex items-center gap-3"><div className="w-1 h-1 rounded-full bg-white/40 shrink-0" /> Deep sentiment analysis (Powered by AI)</li>
-              <li className="flex items-center gap-3"><div className="w-1 h-1 rounded-full bg-white/40 shrink-0" /> Execution blocks</li>
-              <li className="flex items-center gap-3"><div className="w-1 h-1 rounded-full bg-white/40 shrink-0" /> Risk matrices</li>
-              <li className="flex items-center gap-3"><div className="w-1 h-1 rounded-full bg-white/40 shrink-0" /> Dynamic Cards</li>
-              <li className="flex items-center gap-3"><div className="w-1 h-1 rounded-full bg-white/40 shrink-0" /> Custom strategy anchors</li>
-              <li className="flex items-center gap-3"><div className="w-1 h-1 rounded-full bg-white/40 shrink-0" /> Auto PnL tracking</li>
+            <ul className="space-y-5 text-[15px] text-white/70 font-semibold tracking-wide">
+              {["Live market data indexing", "Deep sentiment analysis (Powered by AI)", "Execution blocks", "Risk matrices", "Dynamic Cards", "Custom strategy anchors"].map((text, i) => (
+                <li 
+                  key={i}
+                  className="flex items-center gap-4 cursor-pointer transition-all hover:translate-x-2.5 hover:text-white"
+                >
+                  <div className="w-2 h-2 rounded-full bg-gradient-to-br from-[#fce075] to-orange-500 shadow-[0_0_10px_rgba(252,224,117,1)] shrink-0" />
+                  {text}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
       </section>
 
       {/* Terminal For Professionals section */}
-      <section className="relative z-10 max-w-5xl mx-auto px-6 py-20 border-t border-white/5 pb-40">
-         <h2 className="text-4xl md:text-[40px] font-bold text-[#fce075] text-center mb-16 tracking-tight">Terminal For Professionals.</h2>
+      <section id="architecture" className="relative z-10 max-w-7xl mx-auto px-6 py-32 border-t border-white/5 pb-40">
+         <div className="absolute top-0 left-1/4 w-1/2 h-[1px] bg-gradient-to-r from-transparent via-[#ea580c]/30 to-transparent" />
+         
+         <h2 
+            ref={proTitleRef}
+            style={{ opacity: 0 }}
+            className="text-5xl md:text-[60px] font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-[#a3a3a3] text-center mb-20 tracking-tighter will-change-transform"
+         >
+           Terminal For <span className="text-[#fce075]">Professionals.</span>
+         </h2>
 
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
            {/* Card 1 */}
-           <div className="bg-[#0f0f11] border border-white/5 rounded-2xl p-8 overflow-hidden relative min-h-[300px] flex flex-col group shadow-lg">
-             <div className="absolute -bottom-[20%] -right-[10%] w-[120%] h-[80%] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoJCTxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjZmNlMDc1Ii8+Cjwvc3ZnPg==')] opacity-10 rounded-tl-full mix-blend-screen transition-transform duration-700 group-hover:scale-110"></div>
+           <div 
+             ref={setProCard(0)}
+             style={{ opacity: 0 }}
+             className="bg-[#0c0c0c] border border-white/10 rounded-3xl p-10 overflow-hidden relative min-h-[350px] flex flex-col group shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-2.5 hover:scale-[1.02] will-change-transform"
+           >
+             <div className="absolute -bottom-[30%] -right-[20%] w-[150%] h-[120%] bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoJCTxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjZmNlMDc1Ii8+Cjwvc3ZnPg==')] opacity-[0.15] mix-blend-screen transition-transform duration-1000 group-hover:scale-125 group-hover:opacity-[0.25] group-hover:rotate-6"></div>
              
-             <h3 className="text-[22px] font-bold text-white mb-4 relative z-10 tracking-tight">Market Agnostic</h3>
-             <p className="text-white/60 text-[14px] leading-relaxed relative z-10 max-w-[280px]">
-               Official support for Crypto, FX, Equities, Commodities — portable to any global market.
+             <h3 className="text-[28px] font-black text-white mb-5 relative z-10 tracking-tight">Market Agnostic</h3>
+             <p className="text-white/50 text-[16px] leading-[1.8] relative z-10 max-w-[320px] font-medium">
+               Official support for Crypto, FX, Equities, Commodities — portable to any global market with zero latency.
              </p>
              
-             <div className="mt-auto relative z-10 flex gap-3">
-               <div className="w-9 h-9 rounded-full bg-[#111] border border-white/10 flex items-center justify-center text-white/80 font-bold text-xs"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-               <div className="w-9 h-9 rounded-full bg-[#111] border border-white/10 flex items-center justify-center text-white/80"><Globe className="w-4 h-4"/></div>
-               <div className="w-9 h-9 rounded-full bg-[#111] border border-white/10 flex items-center justify-center text-white/80"><Activity className="w-4 h-4"/></div>
+             <div className="mt-auto relative z-10 flex gap-4">
+               {[
+                 <svg key="s" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+                 <Globe key="g" className="w-5 h-5"/>,
+                 <Activity key="a" className="w-5 h-5"/>
+               ].map((icon, i) => (
+                 <div 
+                   key={i}
+                   className="w-12 h-12 rounded-xl bg-[#111] border border-white/10 flex items-center justify-center text-white/60 font-bold shadow-xl transition-all cursor-pointer hover:-translate-y-1 hover:border-[#fce075] hover:text-[#fce075]"
+                 >
+                   {icon}
+                 </div>
+               ))}
              </div>
            </div>
 
            {/* Card 2 */}
-           <div className="bg-[#0f0f11] border border-white/5 rounded-2xl p-8 overflow-hidden relative min-h-[300px] flex flex-col shadow-lg">
-             <h3 className="text-[22px] font-bold text-white mb-3 tracking-tight">A truly composable terminal.</h3>
-             <p className="text-white/60 text-[14px] leading-relaxed mb-6">
-               Separated as <span className="text-[#fce075]">Data → Core → Execution</span>, offering the high composability that quants love — use Axiom as a library.
+           <div 
+             ref={setProCard(1)}
+             style={{ opacity: 0 }}
+             className="bg-[#0c0c0c] border border-white/10 rounded-3xl p-10 overflow-hidden relative min-h-[350px] flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500 group hover:-translate-y-2.5 hover:scale-[1.02] will-change-transform"
+           >
+             <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+             <h3 className="text-[28px] font-black text-white mb-4 tracking-tight relative z-10">A truly composable terminal.</h3>
+             <p className="text-white/50 text-[16px] leading-[1.8] mb-8 font-medium relative z-10">
+               Separated as <span className="text-[#fce075] font-bold">Data → Core → Execution</span>, offering the high composability that quants love — use Axiom as a library.
              </p>
 
-             <div className="flex flex-col font-mono text-[11px] text-white/50 mt-auto">
-               <div className="flex items-center justify-between border-t border-dashed border-red-500/40 py-2.5">
-                 <span className="text-white/80">axiom-data</span>
-                 <span className="text-white/40">Raw tick and sentiment streams.</span>
-               </div>
-               <div className="flex items-center justify-between border-t border-dashed border-red-500/40 py-2.5">
-                 <span className="text-white/80">axiom-core</span>
-                 <span className="text-white/40">Headless logic engine.</span>
-               </div>
-               <div className="flex items-center justify-between border-t border-dashed border-red-500/40 py-2.5">
-                 <span className="text-white/80">axiom-ui</span>
-                 <span className="text-white/40">UI components.</span>
-               </div>
-               <div className="flex items-center justify-between border-t border-dashed border-red-500/40 py-2.5 border-b">
-                 <span className="text-white/80">axiom-ai</span>
-                 <span className="text-white/40">Local LLM extensions.</span>
-               </div>
+             <div className="flex flex-col font-mono text-[13px] text-white/40 mt-auto relative z-10 space-y-1">
+               {[
+                 { t: "axiom-data", d: "Raw tick and sentiment streams." },
+                 { t: "axiom-core", d: "Headless logic engine." },
+                 { t: "axiom-ui", d: "UI components." },
+                 { t: "axiom-ai", d: "Local LLM extensions." }
+               ].map((item, i) => (
+                 <div 
+                   key={i}
+                   className="flex items-center justify-between border-t border-dashed border-[#ea580c]/30 py-3.5 px-2 rounded transition-all cursor-pointer hover:translate-x-1 hover:bg-white/[0.03]"
+                 >
+                   <span className="text-white/90 font-bold">{item.t}</span>
+                   <span className="text-white/30 hidden sm:block">{item.d}</span>
+                 </div>
+               ))}
              </div>
            </div>
 
            {/* Card 3 */}
-           <div className="bg-[#0f0f11] border border-white/5 rounded-2xl p-8 overflow-hidden relative min-h-[300px] flex flex-col shadow-lg">
-             <h3 className="text-[22px] font-bold text-white mb-3 tracking-tight">Integrates everywhere.</h3>
-             <p className="text-white/60 text-[14px] leading-relaxed mb-6">
-               Designed to integrate with any <span className="text-[#fce075]">execution source</span>, Axiom works on Binance, Interactive Brokers, and even custom matching engines.
+           <div 
+             ref={setProCard(2)}
+             style={{ opacity: 0 }}
+             className="bg-[#0c0c0c] border border-white/10 rounded-3xl p-10 overflow-hidden relative min-h-[350px] flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500 group hover:-translate-y-2.5 hover:scale-[1.02] will-change-transform"
+           >
+             <h3 className="text-[28px] font-black text-white mb-4 tracking-tight">Integrates everywhere.</h3>
+             <p className="text-white/50 text-[16px] leading-[1.8] mb-8 font-medium">
+               Designed to integrate with any <span className="text-[#fce075] font-bold">execution source</span>. Zero vendor lock-in.
              </p>
-             <div className="flex items-center gap-4 text-[#fce075] text-[13px] font-bold mb-6 tracking-wide">
-               <span>Binance</span>
-               <span>IBKR</span>
-               <span>Coinbase</span>
+             <div className="flex items-center gap-6 text-[#fce075] text-[15px] font-black mb-8 tracking-widest uppercase">
+               <span className="cursor-pointer hover:scale-110 transition-transform">Binance</span>
+               <span className="cursor-pointer hover:scale-110 transition-transform">IBKR</span>
+               <span className="cursor-pointer hover:scale-110 transition-transform">Coinbase</span>
              </div>
 
-             <div className="mt-auto bg-[#18181A] border border-white/5 rounded-xl p-4 font-mono text-[11px] shadow-inner">
-               <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-3 text-white/40">
-                 Axiom Broker
-                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+             <div className="mt-auto bg-[#000] border border-white/10 rounded-2xl p-6 font-mono text-[13px] shadow-[inset_0_0_20px_rgba(0,0,0,1)] transition-colors hover:border-[#fce075]/40">
+               <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4 text-white/50 font-bold tracking-widest uppercase text-[10px]">
+                 Axiom Broker Config
+                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                </div>
-               <span className="text-pink-400">import</span> {'{'} loader {'}'} <span className="text-pink-400">from</span> <span className="text-[#fce075]">'axiom/source'</span>;<br/>
-               <span className="text-pink-400">export const</span> source = loader({'{'}<br/>
-               &nbsp;&nbsp;venue: <span className="text-[#fce075]">'BINANCE_FUTURES'</span><br/>
-               {'}'});
+               <div className="leading-[2]">
+                 <span className="text-pink-500 font-bold">import</span> {'{'} loader {'}'} <span className="text-pink-500 font-bold">from</span> <span className="text-[#fce075]">&apos;axiom/source&apos;</span>;<br/>
+                 <span className="text-pink-500 font-bold">export const</span> source = loader({'{'}<br/>
+                 &nbsp;&nbsp;venue: <span className="text-[#fce075]">&apos;BINANCE_FUTURES&apos;</span><br/>
+                 {'}'});
+               </div>
              </div>
            </div>
 
            {/* Card 4 */}
-           <div className="bg-[#0f0f11] border border-white/5 rounded-2xl p-8 overflow-hidden relative min-h-[300px] shadow-lg">
-             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoJCTxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjZWE1ODBjIi8+Cjwvc3ZnPg==')] opacity-10 mix-blend-screen mix-blend-plus-lighter"></div>
-             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-orange-600/20 blur-[60px] rounded-full"></div>
+           <div 
+             ref={setProCard(3)}
+             style={{ opacity: 0 }}
+             className="bg-[#0c0c0c] border border-white/10 rounded-3xl p-10 overflow-hidden relative min-h-[350px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-500 hover:-translate-y-2.5 hover:scale-[1.02] will-change-transform"
+           >
+             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNCIgaGVpZ2h0PSI0IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgoJCTxjaXJjbGUgY3g9IjIiIGN5PSIyIiByPSIxIiBmaWxsPSIjZWE1ODBjIi8+Cjwvc3ZnPg==')] opacity-[0.15] mix-blend-screen mix-blend-plus-lighter"></div>
+             
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-orange-600/20 blur-[80px] rounded-full z-0 animate-[glowRotate_10s_ease-in-out_infinite]" />
              
              {/* Abstract Mockup Back Window */}
-             <div className="absolute top-10 left-6 w-[85%] h-[200px] bg-[#221c13]/90 rounded-xl border border-white/10 shadow-2xl flex flex-col overflow-hidden backdrop-blur-md">
-                <div className="text-white/40 text-[11px] font-mono px-3 py-2.5 border-b border-white/5 flex items-center justify-between">My Contexts</div>
-                <div className="p-3 space-y-1.5 text-[12px] text-white/70 font-medium">
-                  <div className="flex items-center justify-between hover:bg-white/5 p-1.5 rounded cursor-pointer transition-colors">
-                    <span className="flex items-center gap-2.5"><Globe className="w-3.5 h-3.5 text-white/40"/> Spot Markets</span>
-                    <span className="bg-[#fce075] text-[#111] px-2 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-wide">Active</span>
-                  </div>
-                  <div className="flex items-center justify-between hover:bg-white/5 p-1.5 rounded cursor-pointer transition-colors">
-                    <span className="flex items-center gap-2.5"><Database className="w-3.5 h-3.5 text-white/40"/> Derivatives</span>
-                  </div>
-                  <div className="flex items-center justify-between hover:bg-white/5 p-1.5 rounded cursor-pointer transition-colors">
-                    <span className="flex items-center gap-2.5"><Activity className="w-3.5 h-3.5 text-white/40"/> FX Majors</span>
-                  </div>
+             <div className="absolute top-8 left-8 w-[85%] h-[240px] bg-[#1a140d]/90 rounded-2xl border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden backdrop-blur-xl z-10 animate-[floatUp_8s_ease-in-out_infinite]">
+                <div className="text-white/40 text-[11px] font-mono font-bold tracking-widest uppercase px-5 py-3.5 border-b border-white/10 flex items-center justify-between">My Contexts</div>
+                <div className="p-4 space-y-2 text-[14px] text-white/70 font-medium">
+                  {["Spot Markets", "Derivatives", "FX Majors"].map((item, i) => (
+                    <div 
+                      key={i}
+                      className="flex items-center justify-between p-2.5 rounded-lg cursor-pointer transition-colors hover:bg-white/5 hover:translate-x-1"
+                    >
+                      <span className="flex items-center gap-3"><Globe className="w-4 h-4 text-[#fce075]"/> {item}</span>
+                      {i === 0 && <span className="bg-[#fce075] text-[#111] px-2.5 py-1 rounded-sm text-[10px] font-black uppercase tracking-wider shadow-[0_0_10px_rgba(252,224,117,0.5)]">Active</span>}
+                    </div>
+                  ))}
                 </div>
              </div>
 
              {/* Abstract Mockup Front Window */}
-             <div className="absolute top-32 right-6 w-[85%] h-[180px] bg-[#1a1a1a] rounded-xl border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden">
-                <div className="text-white/50 text-[11px] font-mono px-3 py-2.5 border-b border-white/5 bg-[#121212]">Execution Editor</div>
-                <div className="p-4 font-mono text-[11px] text-white/70 leading-loose">
+             <div className="absolute top-36 right-4 w-[85%] h-[220px] backdrop-blur-2xl bg-[#080808]/90 rounded-2xl border border-white/20 shadow-[0_40px_80px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden z-20 animate-[floatDown_9s_ease-in-out_infinite]">
+                <div className="text-white/60 text-[11px] font-mono font-bold tracking-widest uppercase px-5 py-3.5 border-b border-white/10 bg-[#111]">Execution Editor</div>
+                <div className="p-6 font-mono text-[13px] text-white/80 leading-[2] relative">
+                  <div className="absolute top-0 right-0 p-4 opacity-10"><Code2 className="w-16 h-16 text-white" /></div>
                   <span className="text-white/30">---</span><br/>
-                  <span className="text-blue-300">strategy:</span> <span className="text-white">Mean Reversion</span><br/>
+                  <span className="text-blue-300 font-bold">strategy:</span> <span className="text-white">Mean Reversion</span><br/>
                   <span className="text-white/30">---</span><br/><br/>
-                  <span className="text-blue-400 font-bold">#</span> Execute Strategy!<br/><br/>
-                  <span className="text-white/80">This is my first live execution.</span>
+                  <span className="text-blue-400 font-bold text-lg">#</span> <span className="font-bold text-lg">Execute Strategy!</span><br/><br/>
+                  <span className="text-white/60">This system runs isolated.</span>
+                  <span className="inline-block w-2.5 h-4 bg-[#fce075] ml-1 align-middle animate-[blink_1s_steps(1)_infinite]"/>
                 </div>
              </div>
            </div>
@@ -443,24 +685,64 @@ export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
       </section>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/5 bg-[#020202] py-12">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="relative z-10 border-t border-white/10 bg-[#000] py-16">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex flex-col items-center md:items-start">
-             <div className="flex items-center gap-2 text-white mb-1">
-               <Terminal className="w-4 h-4" />
-               <span className="text-sm font-extrabold tracking-widest uppercase">Axiom Terminal</span>
-             </div>
-             <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono">
-                Engineered by <a href="https://softpulser.com" target="_blank" rel="noreferrer" className="text-white hover:text-white/80 transition-colors underline underline-offset-4 decoration-white/30">Softpulser</a>
+             <Link href="/" className="flex items-center gap-3 text-white mb-2 group">
+               <div className="w-6 h-6 rounded bg-[#fce075]/10 flex items-center justify-center border border-[#fce075]/30 group-hover:rotate-180 transition-transform duration-500">
+                 <Terminal className="w-3.5 h-3.5 text-[#fce075]" />
+               </div>
+               <span className="text-base font-black tracking-[0.2em] uppercase group-hover:text-[#fce075] transition-colors">Axiom Terminal</span>
+             </Link>
+             <span className="text-[11px] text-white/40 uppercase tracking-[0.2em] font-mono font-bold mt-2">
+                Engineered by <a href="https://softpulser.com" target="_blank" rel="noreferrer" className="text-white hover:text-[#fce075] transition-colors underline underline-offset-4 decoration-white/20">Softpulser</a>
              </span>
           </div>
           
-          <div className="flex items-center gap-6 text-[11px] uppercase tracking-[0.1em] font-bold text-white/40">
-             <Link href="/legal/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-             <Link href="/legal/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+          <div className="flex items-center gap-8 text-[12px] uppercase tracking-[0.2em] font-black text-white/40 border border-white/5 bg-white/[0.02] px-6 py-3 rounded-full">
+             <Link href="/legal/terms" className="hover:text-white transition-colors relative after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-[#fce075] hover:after:w-full after:transition-all">Terms of Service</Link>
+             <div className="w-1 h-1 rounded-full bg-white/20" />
+             <Link href="/legal/privacy" className="hover:text-white transition-colors relative after:absolute after:-bottom-1 after:left-0 after:w-0 after:h-0.5 after:bg-[#fce075] hover:after:w-full after:transition-all">Privacy Policy</Link>
           </div>
         </div>
       </footer>
+
+      <style jsx global>{`
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        @keyframes riskPulse {
+          0%, 100% { stroke-dashoffset: 200; }
+          50% { stroke-dashoffset: 70; }
+        }
+        @keyframes dataStream {
+          0% { width: 15%; }
+          25% { width: 85%; }
+          50% { width: 40%; }
+          75% { width: 95%; }
+          100% { width: 15%; }
+        }
+        @keyframes volBar {
+          0% { transform: scaleY(1); }
+          100% { transform: scaleY(0.3); }
+        }
+        @keyframes floatUp {
+          0%, 100% { transform: translateY(-10px) rotateX(0deg) rotateY(0deg); }
+          50% { transform: translateY(10px) rotateX(5deg) rotateY(-5deg); }
+        }
+        @keyframes floatDown {
+          0%, 100% { transform: translateY(10px) rotateX(5deg) rotateY(-5deg); }
+          50% { transform: translateY(-10px) rotateX(0deg) rotateY(0deg); }
+        }
+        @keyframes glowRotate {
+          0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+          50% { transform: translate(-50%, -50%) scale(1.2) rotate(90deg); }
+        }
+        html {
+          scroll-behavior: initial !important;
+        }
+      `}</style>
     </div>
   );
 }
