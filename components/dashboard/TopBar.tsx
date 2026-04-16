@@ -15,16 +15,19 @@ interface TopBarProps {
 }
 
 export default function TopBar({ alerts, unreadCount, onMarkAllRead, onClearAll, activeMarket, setActiveMarket }: TopBarProps) {
-  const [time, setTime] = useState<{ local: string; ny: string }>({ local: "--:--:--", ny: "--:--:--" });
+  const [time, setTime] = useState<{ local: string; ny: string; london: string; tokyo: string; sydney: string }>({ local: "--:--", ny: "--:--", london: "--:--", tokyo: "--:--", sydney: "--:--" });
   const [showPanel, setShowPanel] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const fmt = (tz?: string) => new Date().toLocaleTimeString("en-GB", { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
     const updateTime = () => {
-      const now = new Date();
       setTime({
-        local: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
-        ny: now.toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+        local: fmt(),
+        ny: fmt("America/New_York"),
+        london: fmt("Europe/London"),
+        tokyo: fmt("Asia/Tokyo"),
+        sydney: fmt("Australia/Sydney"),
       });
     };
     updateTime();
@@ -74,13 +77,28 @@ export default function TopBar({ alerts, unreadCount, onMarkAllRead, onClearAll,
       </div>
 
       <div className="flex items-center gap-5">
-        <div className="flex items-center gap-4 data-value">
+        <div className="hidden lg:flex items-center gap-3 data-value divide-x divide-white/[0.06]">
+          {[
+            { label: "LCL", val: time.local },
+            { label: "NYC", val: time.ny },
+            { label: "LON", val: time.london },
+            { label: "TYO", val: time.tokyo },
+            { label: "SYD", val: time.sydney },
+          ].map(({ label, val }) => (
+            <div key={label} className="flex items-center gap-1.5 px-3 first:pl-0">
+              <span className="text-white/25 text-[8px] font-black uppercase tracking-widest">{label}</span>
+              <span className="text-white/80 text-[11px] font-semibold font-mono tabular-nums">{val}</span>
+            </div>
+          ))}
+        </div>
+        {/* Mobile: only local + NY */}
+        <div className="flex lg:hidden items-center gap-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest">Local</span>
+            <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest">LCL</span>
             <span className="text-white text-xs font-semibold font-mono">{time.local}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest">NY</span>
+            <span className="text-white/30 text-[9px] font-bold uppercase tracking-widest">NYC</span>
             <span className="text-white text-xs font-mono font-semibold">{time.ny}</span>
           </div>
         </div>

@@ -34,6 +34,11 @@ export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
   const [codeLines, setCodeLines] = useState<number>(0);
   const [showCookies, setShowCookies] = useState(true);
 
+  // Webcam Status
+  const [webcamStatus, setWebcamStatus] = useState<"pending" | "ready" | "error">("pending");
+  const handleWebcamReady = useCallback(() => setWebcamStatus("ready"), []);
+  const handleWebcamError = useCallback(() => setWebcamStatus("error"), []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCodeLines(prev => (prev < 5 ? prev + 1 : 0));
@@ -175,6 +180,17 @@ export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
 
   return (
     <div ref={containerRef} className="min-h-screen bg-[#010101] text-[#FAFAFA] font-sans selection:bg-[#fce075]/30 selection:text-yellow-100 overflow-x-hidden relative">
+      
+      {/* Webcam Request Notice */}
+      {webcamStatus === "pending" && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-top-4 fade-in duration-500">
+          <div className="bg-[#050505] border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-lg px-6 py-3.5 flex items-center gap-4">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(52,211,153,0.5)]" />
+            <span className="text-[11px] font-mono tracking-widest text-white uppercase">Please allow webcam access for the full interactive experience.</span>
+          </div>
+        </div>
+      )}
+
       {/* Webcam pixel grid background */}
       <div className="fixed inset-0 z-0">
         <WebcamPixelGrid
@@ -192,6 +208,8 @@ export default function LandingPage({ onOpenTerminal }: LandingPageProps) {
           borderColor="#ffffff"
           borderOpacity={0.06}
           className="w-full h-full"
+          onWebcamReady={handleWebcamReady}
+          onWebcamError={handleWebcamError}
         />
         {/* Gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 pointer-events-none" />
